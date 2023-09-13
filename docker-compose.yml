@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=inventory
+    ports:
+      - '5432:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  backend:
+    build: ./backend
+    container_name: api_backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://postgres:postgres@didactic-cod-x76p946r95w3v9wv-5432.app.github.dev/inventory?schema=public
+      JWT_SECRET: test
+    ports:
+      - '5000:5000'
+    volumes:
+      - ./backend:/app
+      - ./app/node_modules
+  frontend:
+    build: ./frontend
+    container_name: client_frontend
+    environment:
+      REACT_APP_API: "https://didactic-cod-x76p946r95w3v9wv-5000.app.github.dev/"
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./frontend:/app
+      - ./app/node_modules
+    stdin_open: true
+    tty: true
+
+volumes:
+  db:
+    driver: local
